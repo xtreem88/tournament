@@ -12,17 +12,17 @@ def testDeleteMatches():
 
 def testDelete():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     print "2. Player records can be deleted."
 
 
 def testCount():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     tid = createTournament('Test')
     c = countPlayers(tid)
     if c == '0':
@@ -35,9 +35,9 @@ def testCount():
 
 def testRegister():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     tid = createTournament('Test')
     registerPlayer("Chandra Nalaar", tid)
     c = countPlayers(tid)
@@ -49,9 +49,9 @@ def testRegister():
 
 def testRegisterCountDelete():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     tid = createTournament('Test')
     registerPlayer("Markov Chaney", tid)
     registerPlayer("Joe Malik", tid)
@@ -70,9 +70,9 @@ def testRegisterCountDelete():
 
 def testStandingsBeforeMatches():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     tid = createTournament('Test')
     registerPlayer("Melpomene Murray", tid)
     registerPlayer("Randy Schwartz", tid)
@@ -100,9 +100,9 @@ def testStandingsBeforeMatches():
 
 def testReportMatches():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     tid = createTournament('Test')
     registerPlayer("Bruno Walton", tid)
     registerPlayer("Boots O'Neal", tid)
@@ -129,9 +129,9 @@ def testReportMatches():
 
 def testReportBye():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     tid = createTournament('Test')
     registerPlayer("Bruno Walton", tid)
     standings = playerStandings(tid)
@@ -146,9 +146,9 @@ def testReportBye():
 
 def testHasBye():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     tid = createTournament('Test')
     registerPlayer("Bruno Walton", tid)
     standings = playerStandings(tid)
@@ -161,9 +161,9 @@ def testHasBye():
 
 def testCheckByes():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     tid = createTournament('Test')
     registerPlayer("Bruno Walton", tid)
     registerPlayer("Boots O'Neal", tid)
@@ -179,9 +179,9 @@ def testCheckByes():
 
 def testPairings():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     tid = createTournament('Test')
     registerPlayer("Twilight Sparkle", tid)
     registerPlayer("Fluttershy", tid)
@@ -206,9 +206,9 @@ def testPairings():
 
 def testOddPairings():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     tid = createTournament('Test')
     registerPlayer("Twilight Sparkle", tid)
     registerPlayer("Fluttershy", tid)
@@ -234,9 +234,9 @@ def testOddPairings():
 
 def testRematch():
     deleteMatches()
+    deleteScorecard()
     deletePlayers()
     deleteTournaments()
-    deleteScorecard()
     tid = createTournament('Test')
     registerPlayer("One", tid)
     registerPlayer("Two", tid)
