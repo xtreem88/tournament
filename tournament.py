@@ -182,14 +182,52 @@ def reportMatch(t_id, winner, loser, draw='FALSE'):
                    ])
 
 
-def swissPairings():
-    """Returns a list of pairs of players for the next round of a match.
+def validatePair(player1, player2, t_id):
+    """Checks if two players have already played against each other
+    Args:
+        player1: the id number of first player to check
+        player2: the id number of potentail paired player
+        t_id: the id of the tournament
+    Return true if valid pair, false if not
+    """
+    query = 'SELECT COUNT(winner) as pair FROM matches\
+             WHERE ((winner = %s AND loser = %s)\
+                    OR (winner = %s AND loser = %s))\
+             AND tournament = %s'
+    pairs = execute_find(query, (player1, player2, player2, player1, t_id), 1)
 
+    if pairs[0] > 0:
+        return False
+    return True
+
+
+def checkPairs(t_id, ranks, id1, id2):
+    """Checks if two players have already had a match against each other.
+    If they have, recursively checks through the list until a valid match is
+    found.
+    Args:
+        t_id: id of tournament
+        ranks: list of current ranks from swissPairings()
+        id1: player needing a match
+        id2: potential matched player
+    Returns id of matched player or original match if none are found.
+    """
+    if id2 >= len(ranks):
+        return id1 + 1
+    elif validatePair(ranks[id1][0], ranks[id2][0], t_id):
+        return id2
+    else:
+        return checkPairs(t_id, ranks, id1, (id2 + 1))
+
+
+def swissPairings(t_id):
+    """Returns a list of pairs of players for the next round of a match.
     Assuming that there are an even number of players registered, each player
     appears exactly once in the pairings.  Each player is paired with another
     player with an equal or nearly-equal win record, that is, a player adjacent
     to him or her in the standings.
-
+    Args:
+        t_id: id of tournament you are gettings standings for
     Returns:
       A list of tuples, each of which contains (id1, name1, id2, name2)
         id1: the first player's unique id
@@ -197,9 +235,37 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
+    ranks = playerStandings(t_id)
+    pairs = []
+
+    numPlayers = countPlayers(t_id)
+    if numPlayers % 2 != 0:
+        bye = ranks.pop(checkByes(t_id, ranks, -1))
+        reportBye(t_id, bye[0])
+
+    while len(ranks) > 1:
+        validMatch = checkPairs(t_id, ranks, 0, 1)
+        player1 = ranks.pop(0)
+        player2 = ranks.pop(validMatch - 1)
+        pairs.append((player1[0], player1[1], player2[0], player2[1]))
+
+    return pairs
 
 
 def execute_query(query_list, param_list=None, return_value=0):
+    """
+    Executes queries with psycopg2
+
+    Args
+        query_list: a list of queries to be executed in a transaction
+        param_list: list or query parameters arranged with the
+                    same index as the queries
+        return_value: set to 1 to return a value eg id
+
+    Returns
+        The inserted id if the return_valueis set
+
+    """
     db = connect()
     c = db.cursor()
     id = []
@@ -219,6 +285,18 @@ def execute_query(query_list, param_list=None, return_value=0):
 
 
 def execute_find(query_string, param_list=None, fetch_one=0):
+    """
+    Executes select queries with psycopg2
+
+    Args
+        query_string: query to be executed
+        param_list: list or query parameters
+        fetch_one: set to 1 to return only one row
+
+    Returns
+        the query result in a list
+
+    """
     db = connect()
     c = db.cursor()
     if param_list is None:
