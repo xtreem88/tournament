@@ -17,6 +17,7 @@ This is a simple database project completed for Udacity's full-stack [nanodegree
 
 Log into your PostgreSQL console and create a new database,(reccomended name: tournament):
 
+to login to PostgreSQL use the command: psql
 
 ### 2. Create Tables 
 
