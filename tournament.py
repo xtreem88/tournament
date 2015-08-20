@@ -7,9 +7,13 @@ import psycopg2
 import bleach
 
 
-def connect():
-    """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=tournament")
+def connect(database_name="tournament"):
+    try:
+        db = psycopg2.connect("dbname={0}".format(database_name))
+        cursor = db.cursor()
+        return db, cursor
+    except:
+        print("Error connecting to database")
 
 
 def deleteMatches():
@@ -266,8 +270,7 @@ def execute_query(query_list, param_list=None, return_value=0):
         The inserted id if the return_valueis set
 
     """
-    db = connect()
-    c = db.cursor()
+    db, c = connect()
     id = []
     i = 0
     for query in query_list:
@@ -297,8 +300,7 @@ def execute_find(query_string, param_list=None, fetch_one=0):
         the query result in a list
 
     """
-    db = connect()
-    c = db.cursor()
+    db, c = connect()
     if param_list is None:
         c.execute(query_string)
     else:
