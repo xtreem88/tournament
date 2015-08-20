@@ -40,9 +40,10 @@ def countPlayers(t_id):
     """
     row = execute_find('SELECT count(player) AS num\
              FROM scorecard\
-             WHERE tournament = \'{0}\''.format(bleach.clean(t_id)), 1)
-    
+             WHERE tournament = %s', (bleach.clean(t_id),), 1)
+
     return row[0]
+
 
 def createTournament(name):
     """Adds a tournament to the database.
@@ -51,8 +52,8 @@ def createTournament(name):
 
     """
     t_id = execute_query(['INSERT INTO tournaments (name)\
-        VALUES (\'{0}\') RETURNING id'.format(bleach.clean(name),)], 1)
-
+        VALUES (%s) RETURNING id'],
+                         [(bleach.clean(name),)], 1)
 
     return t_id[0]
 
@@ -68,12 +69,13 @@ def registerPlayer(name, t_id):
       t_id: id of tournament.
     """
     p_id = execute_query(['INSERT INTO players\
-        (name) VALUES (\'{0}\') RETURNING id'.format(bleach.clean(name),)], 1)
-   
+        (name) VALUES (%s) RETURNING id'],
+                         [(bleach.clean(name),)], 1)
+
     execute_query(['INSERT INTO scorecard\
         (tournament,player,score,played,bye)\
-        VALUES (\'{0}\',\'{1}\',\'{2}\',\'{3}\',\'{4}\')'.format(bleach.clean(t_id), p_id[0], 0, 0, 0)])
-
+        VALUES (%s,%s,%s,%s,%s)'],
+                  [(bleach.clean(t_id), p_id[0], 0, 0, 0)])
 
 
 def playerStandings(t_id):
@@ -97,10 +99,10 @@ def playerStandings(t_id):
     rows = execute_find('SELECT s.player, p.name, s.score, s.played, s.bye\
                  FROM scorecard AS s\
                  INNER JOIN players AS p on p.id = s.player\
-                 WHERE tournament = \'{0}\'\
-                 ORDER BY s.score DESC, s.played DESC'.format(bleach.clean(t_id)))
+                 WHERE tournament = %s\
+                 ORDER BY s.score DESC,\
+                 s.played DESC', (bleach.clean(t_id),))
 
-    
     return rows
 
 
@@ -118,18 +120,22 @@ def reportMatch(t_id, winner, loser, draw='FALSE'):
     else:
         win = 3
         loss = 0
-
-    execute_query(['INSERT INTO matches\
+    insert = 'INSERT INTO matches\
     (tournament, winner, loser, draw)\
-    VALUES (\'{0}\',\'{1}\',\'{2}\',\'{3}\')\
-    '.format(bleach.clean(t_id), bleach.clean(winner), 
-        bleach.clean(loser), bleach.clean(draw)),
-    'UPDATE scorecard SET score = score+\'{0}\',\
-    played = played+1 WHERE player = \'{1}\' AND tournament = \'{2}\'\
-    '.format(win, bleach.clean(winner), bleach.clean(t_id)),
-        'UPDATE scorecard SET score = score+\'{0}\',\
-    played = played+1 WHERE player = \'{1}\' AND tournament = \'{2}\'\
-    '.format(win, bleach.clean(loser), bleach.clean(t_id))])
+    VALUES (%s,%s,%s,%s)'
+
+    win_update = 'UPDATE scorecard SET score = score+%s,\
+    played = played+1 WHERE player = %s AND tournament = %s'
+
+    lose_update = 'UPDATE scorecard SET score = score+%s,\
+    played = played+1 WHERE player = %s AND tournament = %s'
+
+    execute_query([insert, win_update, lose_update],
+                  [(bleach.clean(t_id), bleach.clean(winner),
+                    bleach.clean(loser), bleach.clean(draw)),
+                   (win, bleach.clean(winner), bleach.clean(t_id)),
+                   (loss, bleach.clean(loser), bleach.clean(t_id))
+                   ])
 
 
 def swissPairings():
@@ -149,25 +155,32 @@ def swissPairings():
     """
 
 
-def execute_query(query_list, return_value=0):
+def execute_query(query_list, param_list=None, return_value=0):
     db = connect()
     c = db.cursor()
     id = []
+    i = 0
     for query in query_list:
-        c.execute(query)
+        if param_list is None:
+            c.execute(query)
+        else:
+            c.execute(query, param_list[i])
         if return_value == 1:
             id.append(c.fetchone()[0])
+        i += 1
     db.commit()
     db.close()
     if return_value == 1:
         return id
 
 
-
-def execute_find(query_string, fetch_one=0):
+def execute_find(query_string, param_list=None, fetch_one=0):
     db = connect()
     c = db.cursor()
-    c.execute(query_string)
+    if param_list is None:
+        c.execute(query_string)
+    else:
+        c.execute(query_string, param_list)
     if fetch_one == 1:
         rows = c.fetchone()
     else:
