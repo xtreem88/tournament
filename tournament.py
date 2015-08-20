@@ -21,10 +21,11 @@ def deletePlayers():
     """Remove all the player records from the database."""
     execute_query(['DELETE FROM players'])
 
+
 def deleteTournaments():
     """Remove all the tournament records from the database."""
     execute_query(['DELETE FROM tournaments'])
-    
+
 
 def deleteScorecard():
     """Remove all the scorecard records from the database."""
@@ -35,28 +36,28 @@ def countPlayers(t_id):
     """Returns the number of players currently registered.
 
         Args:
-        tid: id of tournament
+        t_id: id of tournament
     """
-    rows = execute_find('SELECT count(player) AS num\
+    row = execute_find('SELECT count(player) AS num\
              FROM scorecard\
-             WHERE tournament = {\'0\'}'.format(bleach.clean(t_id),)])
-    result = rows.fetchone()[0]
-    return result
+             WHERE tournament = \'{0}\''.format(bleach.clean(t_id)), 1)
+    
+    return row[0]
 
 def createTournament(name):
     """Adds a tournament to the database.
     Args:
         Name of tournament
+
     """
-    c = execute_query(['INSERT INTO tournaments (name)\
-        VALUES (\'{0}\') RETURNING id'.format(bleach.clean(name),)])
-    
-    t_id = c.fetchone()[0]
-    
-    return t_id
+    t_id = execute_query(['INSERT INTO tournaments (name)\
+        VALUES (\'{0}\') RETURNING id'.format(bleach.clean(name),)], 1)
 
 
-def registerPlayer(name):
+    return t_id[0]
+
+
+def registerPlayer(name, t_id):
     """Adds a player to the tournament database.
 
     The database assigns a unique serial id number for the player.  (This
@@ -64,34 +65,71 @@ def registerPlayer(name):
 
     Args:
       name: the player's full name (need not be unique).
+      t_id: id of tournament.
     """
-    execute_query(['INSERT INTO players\
-        (name) VALUES (\'{0}\')'.format(bleach.clean(name),)])
+    p_id = execute_query(['INSERT INTO players\
+        (name) VALUES (\'{0}\') RETURNING id'.format(bleach.clean(name),)], 1)
+   
+    execute_query(['INSERT INTO scorecard\
+        (tournament,player,score,played,bye)\
+        VALUES (\'{0}\',\'{1}\',\'{2}\',\'{3}\',\'{4}\')'.format(bleach.clean(t_id), p_id[0], 0, 0, 0)])
 
 
-def playerStandings():
+
+def playerStandings(t_id):
     """Returns a list of the players and their win records, sorted by wins.
 
     The first entry in the list should be the player in first place,
     or a player
     tied for first place if there is currently a tie.
 
+    Args:
+        tid: id of tournament getting standings for
+
     Returns:
-      A list of tuples, each of which contains (id, name, wins, matches):
+      A list of tuples, each of which contains (id, name, wins, played):
         id: the player's unique id (assigned by the database)
         name: the player's full name (as registered)
         wins: the number of matches the player has won
-        matches: the number of matches the player has played
+        played: the number of matches the player has played
     """
 
+    rows = execute_find('SELECT s.player, p.name, s.score, s.played, s.bye\
+                 FROM scorecard AS s\
+                 INNER JOIN players AS p on p.id = s.player\
+                 WHERE tournament = \'{0}\'\
+                 ORDER BY s.score DESC, s.played DESC'.format(bleach.clean(t_id)))
 
-def reportMatch(winner, loser):
+    
+    return rows
+
+
+def reportMatch(t_id, winner, loser, draw='FALSE'):
     """Records the outcome of a single match between two players.
-
     Args:
+      t_id: the id of the tournament match was in
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
+      draw:  if the match was a draw
     """
+    if draw == 'TRUE':
+        win = 1
+        loss = 1
+    else:
+        win = 3
+        loss = 0
+
+    execute_query(['INSERT INTO matches\
+    (tournament, winner, loser, draw)\
+    VALUES (\'{0}\',\'{1}\',\'{2}\',\'{3}\')\
+    '.format(bleach.clean(t_id), bleach.clean(winner), 
+        bleach.clean(loser), bleach.clean(draw)),
+    'UPDATE scorecard SET score = score+\'{0}\',\
+    played = played+1 WHERE player = \'{1}\' AND tournament = \'{2}\'\
+    '.format(win, bleach.clean(winner), bleach.clean(t_id)),
+        'UPDATE scorecard SET score = score+\'{0}\',\
+    played = played+1 WHERE player = \'{1}\' AND tournament = \'{2}\'\
+    '.format(win, bleach.clean(loser), bleach.clean(t_id))])
 
 
 def swissPairings():
@@ -111,21 +149,28 @@ def swissPairings():
     """
 
 
-def execute_query(query_list):
+def execute_query(query_list, return_value=0):
     db = connect()
     c = db.cursor()
+    id = []
     for query in query_list:
         c.execute(query)
+        if return_value == 1:
+            id.append(c.fetchone()[0])
     db.commit()
     db.close()
+    if return_value == 1:
+        return id
 
-    return c
 
 
-def execute_find(query_string):
+def execute_find(query_string, fetch_one=0):
     db = connect()
     c = db.cursor()
     c.execute(query_string)
-    rows = c.fetchall()
+    if fetch_one == 1:
+        rows = c.fetchone()
+    else:
+        rows = c.fetchall()
     db.close()
     return rows

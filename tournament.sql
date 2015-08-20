@@ -15,20 +15,21 @@ CREATE TABLE players (
 -- table for matches
 CREATE TABLE matches (
     id SERIAL primary key, 
-    tournament SERIAL references tournaments(id),
-    winner SERIAL references players(id), 
-    loser SERIAL references players(id),
+    tournament INTEGER,
+    winner INTEGER, 
+    loser INTEGER,
     draw BOOLEAN
     );
 
 CREATE TABLE tournaments (
-	id SERIAL,
+	id SERIAL primary key,
     name TEXT );
 
 
-CREATE TABLE scorecard ( 
-	tournament SERIAL references tournaments(id),
-    player SERIAL references players(id), 
+CREATE TABLE scorecard (
+    id SERIAL primary key, 
+	tournament INTEGER,
+    player INTEGER, 
     score INTEGER,
     played INTEGER,
     bye INTEGER );
