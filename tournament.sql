@@ -41,3 +41,7 @@ CREATE TABLE scorecard (
     bye INTEGER );
 
 
+CREATE VIEW standings AS
+    SELECT s.tournament, s.player, p.name, s.score, s.played, s.bye
+                 FROM scorecard AS s
+                 INNER JOIN players AS p on p.id = s.player;

@@ -100,12 +100,11 @@ def playerStandings(t_id):
         played: the number of matches the player has played
     """
 
-    rows = execute_find('SELECT s.player, p.name, s.score, s.played, s.bye\
-                 FROM scorecard AS s\
-                 INNER JOIN players AS p on p.id = s.player\
-                 WHERE tournament = %s\
-                 ORDER BY s.score DESC,\
-                 s.played DESC', (bleach.clean(t_id),))
+    rows = execute_find('SELECT player, name, score, played, bye\
+                FROM standings\
+                WHERE tournament = %s\
+                ORDER BY score DESC,\
+                played DESC', (bleach.clean(t_id),))
 
     return rows
 
