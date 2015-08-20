@@ -2,7 +2,7 @@
 #
 # Test cases for tournament.py
 
-from sample import *
+from tournament import *
 
 
 def testDeleteMatches():
