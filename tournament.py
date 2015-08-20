@@ -21,17 +21,39 @@ def deletePlayers():
     """Remove all the player records from the database."""
     execute_query(['DELETE FROM players'])
 
+def deleteTournaments():
+    """Remove all the tournament records from the database."""
+    execute_query(['DELETE FROM tournaments'])
+    
 
-def countPlayers():
-    """Returns the number of players currently registered."""
-    db = connect()
-    c = db.cursor()
-    c.execute('SELECT COALESCE(count(*),0) FROM players')
-    rows = c.fetchall()
-    db.close()
-    for row in rows:
-        result = row[0]
+def deleteScorecard():
+    """Remove all the scorecard records from the database."""
+    execute_query(['DELETE FROM scorecard'])
+
+
+def countPlayers(t_id):
+    """Returns the number of players currently registered.
+
+        Args:
+        tid: id of tournament
+    """
+    rows = execute_find('SELECT count(player) AS num\
+             FROM scorecard\
+             WHERE tournament = {\'0\'}'.format(bleach.clean(t_id),)])
+    result = rows.fetchone()[0]
     return result
+
+def createTournament(name):
+    """Adds a tournament to the database.
+    Args:
+        Name of tournament
+    """
+    c = execute_query(['INSERT INTO tournaments (name)\
+        VALUES (\'{0}\') RETURNING id'.format(bleach.clean(name),)])
+    
+    t_id = c.fetchone()[0]
+    
+    return t_id
 
 
 def registerPlayer(name):
@@ -96,6 +118,8 @@ def execute_query(query_list):
         c.execute(query)
     db.commit()
     db.close()
+
+    return c
 
 
 def execute_find(query_string):
