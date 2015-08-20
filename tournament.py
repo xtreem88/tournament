@@ -86,7 +86,7 @@ def playerStandings(t_id):
     tied for first place if there is currently a tie.
 
     Args:
-        tid: id of tournament getting standings for
+        t_id: id of tournament getting standings for
 
     Returns:
       A list of tuples, each of which contains (id, name, wins, played):
@@ -104,6 +104,50 @@ def playerStandings(t_id):
                  s.played DESC', (bleach.clean(t_id),))
 
     return rows
+
+
+def hasBye(id, t_id):
+    """Checks if player has bye.
+    Args:
+        id: id of player to check
+        t_id: id of tournament
+    Returns true or false.
+    """
+    query = 'SELECT bye FROM scorecard\
+             WHERE player = %s AND tournament = %s'
+    bye = execute_find(query, (id, t_id), 1)
+
+    if bye[0] == 0:
+        return True
+    else:
+        return False
+
+
+def reportBye(player, t_id):
+    """Assign points for a bye.
+    Args:
+      player: id of player who receives a bye.
+      t_id: the id of the tournament
+    """
+    query = 'UPDATE scorecard SET score = score+3,\
+    bye=bye+1 WHERE player = %s AND tournament = %s'
+    execute_query([query], [(player, t_id)])
+
+
+def checkByes(t_id, ranks, index):
+    """Checks if players already have a bye
+    Args:
+        t_id: tournament id
+        ranks: list of current ranks from swissPairings()
+        index: index to check
+    Returns first id that is valid or original id if none are found.
+    """
+    if abs(index) > len(ranks):
+        return -1
+    elif not hasBye(ranks[index][0], t_id):
+        return index
+    else:
+        return checkByes(t_id, ranks, (index - 1))
 
 
 def reportMatch(t_id, winner, loser, draw='FALSE'):
